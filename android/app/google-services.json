@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "869229930083",
+    "project_id": "bdcrudmascotas",
+    "storage_bucket": "bdcrudmascotas.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:869229930083:android:45446f651703b82b11fa56",
+        "android_client_info": {
+          "package_name": "com.example.crudveterinaria"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBr_sBBURm1zSWb2aL6XsogXjUm984L6mo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:869229930083:android:30c5efcb305af7ef11fa56",
+        "android_client_info": {
+          "package_name": "com.tuusuario.veterinaria"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBr_sBBURm1zSWb2aL6XsogXjUm984L6mo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
