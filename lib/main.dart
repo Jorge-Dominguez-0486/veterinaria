@@ -6,7 +6,15 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/router/app_router.dart';
+
+// Providers
 import 'presentation/providers/auth_provider.dart';
+import 'presentation/providers/clientes_mascotas_provider.dart';
+import 'presentation/providers/catalogos_provider.dart';
+import 'presentation/providers/inventario_provider.dart';
+import 'presentation/providers/veterinaria_provider.dart';
+import 'presentation/providers/finanzas_provider.dart';
+import 'presentation/providers/rrhh_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,8 +31,17 @@ class PolivetApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // ── Auth ──────────────────────────────────────────────────────
         ChangeNotifierProvider(create: (_) => ProveedorAuth()),
-        // Fase 3: más providers aquí
+
+        // ── Fase 3: Providers de negocio ──────────────────────────────
+        ChangeNotifierProvider(create: (_) => ProveedorClientes()),
+        ChangeNotifierProvider(create: (_) => ProveedorMascotas()),
+        ChangeNotifierProvider(create: (_) => ProveedorCatalogos()),
+        ChangeNotifierProvider(create: (_) => ProveedorInventario()),
+        ChangeNotifierProvider(create: (_) => ProveedorVeterinaria()),
+        ChangeNotifierProvider(create: (_) => ProveedorFinanzas()),
+        ChangeNotifierProvider(create: (_) => ProveedorRRHH()),
       ],
       child: MaterialApp.router(
         title: 'Polivet Pro',
