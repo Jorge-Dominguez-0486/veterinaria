@@ -235,4 +235,63 @@ class ProveedorInventario extends ChangeNotifier {
     _cargando = v;
     notifyListeners();
   }
+  // ────────────────────────────────────────────────────────────────────
+  //  MÉTODOS ALIAS Y COMPATIBILIDAD CON PANTALLAS
+  // ────────────────────────────────────────────────────────────────────
+
+  // Devuelve la lista de productos que tienen stock bajo
+  List<ProductoModelo> get productosStockBajo {
+    return stockBajo
+        .map((inv) => obtenerProductoPorId(inv.productoId))
+        .whereType<ProductoModelo>()
+        .toList();
+  }
+
+  // Devuelve el stock actual
+  int stockDe(String productoId) => stockActual(productoId);
+
+  // Devuelve el stock mínimo configurado
+  int stockMinimoDe(String productoId) {
+    final item = inventarioPorProducto(productoId);
+    return item?.cantidadMinima ?? 0;
+  }
+
+  // Crea producto con sus parámetros de stock inicial
+  Future<bool> crearProductoConStock(
+    ProductoModelo producto, {
+    required int stockInicial,
+    required int stockMinimo,
+    required int stockMaximo,
+  }) async {
+    _setCargando(true);
+    try {
+      // 1. Guardar producto
+      await _repoProductos.crear(producto);
+
+      // 2. Obtener el producto creado para saber su ID real
+      _productos = await _repoProductos.obtenerTodos();
+      final productoCreado =
+          _productos.lastWhere((p) => p.nombre == producto.nombre);
+
+      // 3. Crear su inventario vinculado
+      final nuevoInventario = InventarioModelo(
+        id: '',
+        productoId: productoCreado.id,
+        cantidadActual: stockInicial,
+        cantidadMinima: stockMinimo,
+        cantidadMaxima: stockMaximo,
+        ultimaActualizacion: DateTime.now(),
+      );
+
+      await _repoInventario.crear(nuevoInventario);
+      await cargarTodo();
+      return true;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+      notifyListeners();
+      return false;
+    } finally {
+      _setCargando(false);
+    }
+  }
 }

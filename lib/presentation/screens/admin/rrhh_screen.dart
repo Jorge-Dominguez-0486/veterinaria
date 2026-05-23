@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/modelos/rrhh_modelo.dart';
 import '../../providers/rrhh_provider.dart';
-import 'widgets/widgets_comunes.dart';
+import '../../widgets/widgets_comunes.dart';
 
 class RrhhScreen extends StatefulWidget {
   const RrhhScreen({super.key});
@@ -229,7 +229,7 @@ class _FormEmpleadoState extends State<_FormEmpleado> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _EncabezadoForm(
+              EncabezadoForm(
                   titulo: _esEdicion ? 'Editar empleado' : 'Nuevo empleado',
                   onCerrar: () => Navigator.of(context).pop()),
               const SizedBox(height: 16),
@@ -303,7 +303,7 @@ class _FormEmpleadoState extends State<_FormEmpleado> {
                     labelText: 'Horario (ej: Lun-Vie 9-18)'),
               ),
               const SizedBox(height: 24),
-              _BotonGuardar(
+              BotonGuardar(
                   guardando: _guardando,
                   esEdicion: _esEdicion,
                   onGuardar: _guardar),

@@ -8,7 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/modelos/mascota_modelo.dart';
 import '../../providers/clientes_mascotas_provider.dart';
 import '../../providers/catalogos_provider.dart';
-import '../widgets/widgets_comunes.dart';
+import '../../widgets/widgets_comunes.dart';
 
 class MascotasScreen extends StatefulWidget {
   const MascotasScreen({super.key});

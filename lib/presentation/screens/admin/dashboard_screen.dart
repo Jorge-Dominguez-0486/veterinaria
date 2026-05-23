@@ -11,7 +11,8 @@ import '../../providers/veterinaria_provider.dart';
 import '../../providers/inventario_provider.dart';
 import '../../providers/finanzas_provider.dart';
 import '../../providers/rrhh_provider.dart';
-import 'widgets/widgets_comunes.dart';
+// ¡Ruta corregida aquí! 👇
+import '../../widgets/widgets_comunes.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -108,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _KpiCard(
               icono: Icons.warning_amber_rounded,
               label: 'Stock bajo',
-              valor: '${inv.productosStockBajo.length}',
+              valor: '${inv.stockBajo.length}', // Corrección aquí
               color: AppColors.error,
             ),
             _KpiCard(
@@ -145,14 +146,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 24),
 
           // ── Alertas de stock ──────────────────────────────────────
-          if (inv.productosStockBajo.isNotEmpty) ...[
+          if (inv.stockBajo.isNotEmpty) ...[
             Text('⚠️ Alertas de inventario', style: _estiloSeccion(context)),
             const SizedBox(height: 10),
-            ...inv.productosStockBajo.take(5).map((p) => _AlertaStockTile(
-                  nombre: p.nombre,
-                  stockActual: inv.stockDe(p.id),
-                  stockMinimo: inv.stockMinimoDe(p.id),
-                )),
+            // Corrección lógica aquí 👇
+            ...inv.stockBajo.take(5).map((item) {
+              final prod = inv.obtenerProductoPorId(item.productoId);
+              return _AlertaStockTile(
+                nombre: prod?.nombre ?? 'Producto Desconocido',
+                stockActual: item.cantidadActual,
+                stockMinimo: item.cantidadMinima,
+              );
+            }),
             const SizedBox(height: 24),
           ],
 
@@ -392,7 +397,7 @@ class _AlertaStockTile extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
         subtitle: Text('Stock: $stockActual · Mínimo: $stockMinimo',
             style: const TextStyle(fontSize: 11)),
-        trailing: ChipEstado(estado: 'pendiente'),
+        trailing: const ChipEstado(estado: 'pendiente'),
       ),
     );
   }

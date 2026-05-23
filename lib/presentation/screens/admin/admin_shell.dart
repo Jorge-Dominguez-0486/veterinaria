@@ -56,9 +56,6 @@ class _AdminShellState extends State<AdminShell> {
     FinanzasScreen(),
   ];
 
-  // Botón FAB sólo en ciertas secciones
-  final _fabAcciones = <int, VoidCallback?>{};
-
   @override
   Widget build(BuildContext context) {
     final esEscritorio = MediaQuery.of(context).size.width >= 720;
@@ -135,7 +132,6 @@ class _AdminShellState extends State<AdminShell> {
   }
 
   Widget? _buildFab() {
-    // FAB para agregar en cada sección (excepto Dashboard)
     if (_indice == 0) return null;
     final labels = [
       '',
@@ -170,28 +166,27 @@ class _AdminShellState extends State<AdminShell> {
       icon: Icon(icons[_indice]),
       label: Text(labels[_indice]),
       onPressed: () {
-        // Enviamos una señal global usando un GlobalKey si fuera necesario.
-        // Por simplicidad, el FAB en cada Screen lo maneja internamente
-        // a través del GlobalKey de la pantalla.
         final ctx = context;
         switch (_indice) {
           case 1:
-            ClientesScreen.abrirFormulario(ctx);
+            // TODO: Se activará cuando reparemos ClientesScreen
+            // ClientesScreen.abrirFormulario(ctx);
             break;
           case 2:
-            MascotasScreen.abrirFormulario(ctx);
+            // TODO: Se activará cuando reparemos MascotasScreen
+            // MascotasScreen.abrirFormulario(ctx);
             break;
           case 3:
-            CitasScreen.abrirFormulario(ctx);
+            // CitasScreen.abrirFormulario(ctx);
             break;
           case 4:
-            InventarioScreen.abrirFormulario(ctx);
+            // InventarioScreen.abrirFormulario(ctx);
             break;
           case 5:
-            RrhhScreen.abrirFormulario(ctx);
+            // RrhhScreen.abrirFormulario(ctx);
             break;
           case 6:
-            FinanzasScreen.abrirFormulario(ctx);
+            // FinanzasScreen.abrirFormulario(ctx);
             break;
         }
       },
@@ -199,7 +194,6 @@ class _AdminShellState extends State<AdminShell> {
   }
 }
 
-// ── Navegación inferior (móvil) ───────────────────────────────────────────
 class _BottomNav extends StatelessWidget {
   final int indice;
   final List<_NavDestino> destinos;
@@ -227,7 +221,6 @@ class _BottomNav extends StatelessWidget {
   }
 }
 
-// ── Navigation Rail (escritorio/tablet) ──────────────────────────────────
 class _RailNav extends StatelessWidget {
   final int indice;
   final List<_NavDestino> destinos;

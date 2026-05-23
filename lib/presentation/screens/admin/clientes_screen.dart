@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/modelos/cliente_modelo.dart';
 import '../../providers/clientes_mascotas_provider.dart';
-import '../widgets/widgets_comunes.dart';
+import '../../widgets/widgets_comunes.dart';
 
 class ClientesScreen extends StatefulWidget {
   const ClientesScreen({super.key});

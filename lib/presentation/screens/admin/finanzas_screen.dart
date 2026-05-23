@@ -10,7 +10,7 @@ import '../../providers/finanzas_provider.dart';
 import '../../providers/clientes_mascotas_provider.dart';
 import '../../providers/inventario_provider.dart';
 import '../../providers/rrhh_provider.dart';
-import 'widgets/widgets_comunes.dart';
+import '../../widgets/widgets_comunes.dart';
 
 class FinanzasScreen extends StatefulWidget {
   const FinanzasScreen({super.key});
@@ -373,7 +373,7 @@ class _FormVentaState extends State<_FormVenta> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _EncabezadoForm(
+              EncabezadoForm(
                   titulo: 'Nueva venta',
                   onCerrar: () => Navigator.of(context).pop()),
               const SizedBox(height: 16),
@@ -474,7 +474,7 @@ class _FormVentaState extends State<_FormVenta> {
                 maxLines: 2,
               ),
               const SizedBox(height: 24),
-              _BotonGuardar(
+              BotonGuardar(
                   guardando: _guardando, esEdicion: false, onGuardar: _guardar),
             ],
           ),
@@ -605,7 +605,7 @@ class _FormGastoState extends State<_FormGasto> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _EncabezadoForm(
+            EncabezadoForm(
                 titulo: 'Registrar gasto',
                 onCerrar: () => Navigator.of(context).pop()),
             const SizedBox(height: 16),
@@ -637,7 +637,7 @@ class _FormGastoState extends State<_FormGasto> {
               decoration: const InputDecoration(labelText: 'Notas'),
             ),
             const SizedBox(height: 24),
-            _BotonGuardar(
+            BotonGuardar(
                 guardando: _guardando, esEdicion: false, onGuardar: _guardar),
           ],
         ),

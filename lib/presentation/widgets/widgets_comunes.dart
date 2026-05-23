@@ -176,11 +176,12 @@ class FilaDetalle extends StatelessWidget {
 }
 
 // ── Encabezado de formulario modal ────────────────────────────────────────
-class _EncabezadoForm extends StatelessWidget {
+class EncabezadoForm extends StatelessWidget {
   final String titulo;
   final VoidCallback onCerrar;
 
-  const _EncabezadoForm({required this.titulo, required this.onCerrar});
+  const EncabezadoForm(
+      {super.key, required this.titulo, required this.onCerrar});
 
   @override
   Widget build(BuildContext context) {
@@ -195,12 +196,13 @@ class _EncabezadoForm extends StatelessWidget {
 }
 
 // ── Botón guardar ─────────────────────────────────────────────────────────
-class _BotonGuardar extends StatelessWidget {
+class BotonGuardar extends StatelessWidget {
   final bool guardando;
   final bool esEdicion;
   final VoidCallback onGuardar;
 
-  const _BotonGuardar({
+  const BotonGuardar({
+    super.key,
     required this.guardando,
     required this.esEdicion,
     required this.onGuardar,

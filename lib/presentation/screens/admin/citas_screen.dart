@@ -9,7 +9,7 @@ import '../../../data/modelos/veterinaria_modelo.dart';
 import '../../providers/veterinaria_provider.dart';
 import '../../providers/clientes_mascotas_provider.dart';
 import '../../providers/rrhh_provider.dart';
-import 'widgets/widgets_comunes.dart';
+import '../../widgets/widgets_comunes.dart';
 
 class CitasScreen extends StatefulWidget {
   const CitasScreen({super.key});
@@ -266,7 +266,7 @@ class _FormCitaState extends State<_FormCita> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _EncabezadoForm(
+              EncabezadoForm(
                 titulo: _esEdicion ? 'Editar cita' : 'Nueva cita',
                 onCerrar: () => Navigator.of(context).pop(),
               ),
@@ -342,7 +342,7 @@ class _FormCitaState extends State<_FormCita> {
                 maxLines: 2,
               ),
               const SizedBox(height: 24),
-              _BotonGuardar(
+              BotonGuardar(
                   guardando: _guardando,
                   esEdicion: _esEdicion,
                   onGuardar: _guardar),
