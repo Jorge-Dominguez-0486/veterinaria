@@ -1,3 +1,6 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  app_router.dart  —  Rutas de la aplicación (Fase 4 completa)
+// ═══════════════════════════════════════════════════════════════════════════
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +9,7 @@ import '../../presentation/providers/auth_provider.dart';
 import '../../presentation/screens/auth/bienvenida_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/registro_screen.dart';
+import '../../presentation/screens/admin/admin_shell.dart';
 
 class AppRutas {
   AppRutas._();
@@ -41,7 +45,7 @@ class AppRouter {
       GoRoute(
         path: AppRutas.panel,
         name: 'panel',
-        builder: (context, state) => const _PanelProvisional(),
+        builder: (context, state) => const AdminShell(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
@@ -68,45 +72,5 @@ class AppRouter {
     if (!autenticado && !enRutaPublica) return AppRutas.bienvenida;
     if (autenticado && enRutaPublica) return AppRutas.panel;
     return null;
-  }
-}
-
-// Panel provisional — se reemplaza en Fase 4
-class _PanelProvisional extends StatelessWidget {
-  const _PanelProvisional();
-
-  @override
-  Widget build(BuildContext context) {
-    final auth = context.watch<ProveedorAuth>();
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Panel de Administración'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => context.read<ProveedorAuth>().cerrarSesion(),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.pets, size: 80, color: Color(0xFFBC6C25)),
-            const SizedBox(height: 16),
-            Text(
-              '¡Bienvenido, ${auth.usuario?.nombreCompleto ?? 'Usuario'}!',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Fase 1 completa ✅\nFase 4 trae el panel completo...',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
