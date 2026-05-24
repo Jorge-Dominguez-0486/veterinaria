@@ -13,6 +13,7 @@ import 'citas_screen.dart';
 import 'inventario_screen.dart';
 import 'rrhh_screen.dart';
 import 'finanzas_screen.dart';
+import 'catalogos_screen.dart';
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -24,6 +25,9 @@ class AdminShell extends StatefulWidget {
 class _AdminShellState extends State<AdminShell> {
   int _indice = 0;
 
+  // GlobalKey para poder llamar abrirNuevo() desde el FAB
+  final _catalogosKey = GlobalKey<CatalogosScreenState>();
+
   static const _destinos = [
     _NavDestino(Icons.dashboard_rounded, Icons.dashboard_outlined, 'Inicio'),
     _NavDestino(Icons.people_rounded, Icons.people_outline_rounded, 'Clientes'),
@@ -34,6 +38,7 @@ class _AdminShellState extends State<AdminShell> {
         Icons.inventory_2_rounded, Icons.inventory_2_outlined, 'Inventario'),
     _NavDestino(Icons.badge_rounded, Icons.badge_outlined, 'RRHH'),
     _NavDestino(Icons.attach_money_rounded, Icons.money_outlined, 'Finanzas'),
+    _NavDestino(Icons.menu_book_rounded, Icons.menu_book_outlined, 'Catálogos'),
   ];
 
   static const _titulos = [
@@ -44,17 +49,19 @@ class _AdminShellState extends State<AdminShell> {
     'Inventario',
     'RRHH',
     'Finanzas',
+    'Catálogos',
   ];
 
-  static const _pantallas = [
-    DashboardScreen(),
-    ClientesScreen(),
-    MascotasScreen(),
-    CitasScreen(),
-    InventarioScreen(),
-    RrhhScreen(),
-    FinanzasScreen(),
-  ];
+  List<Widget> get _pantallas => [
+        const DashboardScreen(),
+        const ClientesScreen(),
+        const MascotasScreen(),
+        const CitasScreen(),
+        const InventarioScreen(),
+        const RrhhScreen(),
+        const FinanzasScreen(),
+        CatalogosScreen(key: _catalogosKey),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +140,7 @@ class _AdminShellState extends State<AdminShell> {
 
   Widget? _buildFab() {
     if (_indice == 0) return null;
+
     final labels = [
       '',
       'Agregar cliente',
@@ -140,7 +148,8 @@ class _AdminShellState extends State<AdminShell> {
       'Nueva cita',
       'Nuevo producto',
       'Nuevo empleado',
-      'Nueva venta'
+      'Nueva venta',
+      'Nuevo registro',
     ];
     final icons = [
       null,
@@ -149,7 +158,8 @@ class _AdminShellState extends State<AdminShell> {
       Icons.event_available_rounded,
       Icons.add_box_rounded,
       Icons.person_add_rounded,
-      Icons.receipt_long_rounded
+      Icons.receipt_long_rounded,
+      Icons.add_rounded,
     ];
     final keys = [
       'fab_clientes',
@@ -157,8 +167,10 @@ class _AdminShellState extends State<AdminShell> {
       'fab_citas',
       'fab_inventario',
       'fab_rrhh',
-      'fab_finanzas'
+      'fab_finanzas',
+      'fab_catalogos',
     ];
+
     return FloatingActionButton.extended(
       key: ValueKey(keys[_indice - 1]),
       backgroundColor: AppColors.primario,
@@ -180,6 +192,9 @@ class _AdminShellState extends State<AdminShell> {
             RrhhScreen.abrirFormulario(ctx);
           case 6:
             FinanzasScreen.abrirFormulario(ctx);
+          case 7:
+            // Delega al State interno de CatalogosScreen
+            _catalogosKey.currentState?.abrirNuevo();
         }
       },
     );
