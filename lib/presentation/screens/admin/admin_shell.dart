@@ -14,6 +14,7 @@ import 'inventario_screen.dart';
 import 'rrhh_screen.dart';
 import 'finanzas_screen.dart';
 import 'catalogos_screen.dart';
+import 'usuarios_roles_screen.dart';
 import '../cliente/cliente_shell.dart';
 
 class AdminShell extends StatefulWidget {
@@ -40,6 +41,8 @@ class _AdminShellState extends State<AdminShell> {
     _NavDestino(Icons.badge_rounded, Icons.badge_outlined, 'RRHH'),
     _NavDestino(Icons.attach_money_rounded, Icons.money_outlined, 'Finanzas'),
     _NavDestino(Icons.menu_book_rounded, Icons.menu_book_outlined, 'Catálogos'),
+    _NavDestino(Icons.manage_accounts_rounded, Icons.manage_accounts_outlined,
+        'Usuarios'),
   ];
 
   static const _titulos = [
@@ -51,6 +54,7 @@ class _AdminShellState extends State<AdminShell> {
     'RRHH',
     'Finanzas',
     'Catálogos',
+    'Usuarios',
   ];
 
   List<Widget> get _pantallas => [
@@ -62,6 +66,7 @@ class _AdminShellState extends State<AdminShell> {
         const RrhhScreen(),
         const FinanzasScreen(),
         CatalogosScreen(key: _catalogosKey),
+        const UsuariosRolesScreen(),
       ];
 
   @override
@@ -162,6 +167,7 @@ class _AdminShellState extends State<AdminShell> {
       'Nuevo empleado',
       'Nueva venta',
       'Nuevo registro',
+      '', // Usuarios no tiene FAB
     ];
     final icons = [
       null,
@@ -172,6 +178,7 @@ class _AdminShellState extends State<AdminShell> {
       Icons.person_add_rounded,
       Icons.receipt_long_rounded,
       Icons.add_rounded,
+      null,
     ];
     final keys = [
       'fab_clientes',
@@ -181,7 +188,11 @@ class _AdminShellState extends State<AdminShell> {
       'fab_rrhh',
       'fab_finanzas',
       'fab_catalogos',
+      'fab_usuarios',
     ];
+
+    // La pantalla de Usuarios no tiene FAB
+    if (_indice == 8) return null;
 
     return FloatingActionButton.extended(
       key: ValueKey(keys[_indice - 1]),

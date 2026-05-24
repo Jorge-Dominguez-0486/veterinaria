@@ -552,14 +552,9 @@ class _FormMascotaClienteState extends State<_FormMascotaCliente> {
               ),
               const SizedBox(height: 12),
               Builder(builder: (context) {
-                final nombreEspecieSeleccionada = catalogos.especies
-                    .where((e) => e.id == _especieIdSeleccionada)
-                    .firstOrNull
-                    ?.nombre;
-
-                final razasFiltradas = catalogos.razas
-                    .where((r) => r.especieId == _especieIdSeleccionada)
-                    .toList();
+                final razasFiltradas = _especieIdSeleccionada == null
+                    ? <dynamic>[]
+                    : catalogos.razasPorEspecie(_especieIdSeleccionada!);
 
                 return DropdownButtonFormField<String>(
                   value: _razaIdSeleccionada,

@@ -13,6 +13,7 @@ class ProveedorRRHH extends ChangeNotifier {
     coleccion: Colecciones.empleados,
     fromFirestore: EmpleadoModelo.fromFirestore,
     toFirestore: (e) => e.toFirestore(),
+    // empleados sí tienen 'nombre', se deja el default
   );
 
   final FirestoreRepositorio<HorarioModelo> _repoHorarios =
@@ -20,6 +21,7 @@ class ProveedorRRHH extends ChangeNotifier {
     coleccion: Colecciones.horarios,
     fromFirestore: HorarioModelo.fromFirestore,
     toFirestore: (h) => h.toFirestore(),
+    ordenarPor: null, // horarios no tienen campo 'nombre'
   );
 
   List<EmpleadoModelo> _empleados = [];

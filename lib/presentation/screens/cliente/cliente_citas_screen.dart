@@ -9,6 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/modelos/veterinaria_modelo.dart';
 import '../../../data/modelos/mascota_modelo.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/catalogos_provider.dart';
 import '../../providers/clientes_mascotas_provider.dart';
 import '../../providers/veterinaria_provider.dart';
 import '../../widgets/widgets_comunes.dart';
@@ -32,6 +33,9 @@ class _ClienteCitasScreenState extends State<ClienteCitasScreen>
       final uid = context.read<ProveedorAuth>().usuario?.id ?? '';
       context.read<ProveedorVeterinaria>().cargarCitasPorCliente(uid);
       context.read<ProveedorMascotas>().cargarMascotasPorCliente(uid);
+      context
+          .read<ProveedorCatalogos>()
+          .cargarTodo(); // ← necesario para el form de nueva cita
     });
   }
 
@@ -100,7 +104,7 @@ class _TabCitasProximas extends StatelessWidget {
     final vet = context.watch<ProveedorVeterinaria>();
     final mascotas = context.watch<ProveedorMascotas>();
 
-    final proximas = vet.citas
+    final proximas = vet.citasCliente
         .where((c) =>
             c.estado == 'programada' && c.fechaHora.isAfter(DateTime.now()))
         .toList()
@@ -144,7 +148,7 @@ class _TabCitasHistorial extends StatelessWidget {
     final vet = context.watch<ProveedorVeterinaria>();
     final mascotas = context.watch<ProveedorMascotas>();
 
-    final historial = vet.citas
+    final historial = vet.citasCliente
         .where((c) =>
             c.estado != 'programada' || c.fechaHora.isBefore(DateTime.now()))
         .toList()

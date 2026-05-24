@@ -12,18 +12,21 @@ class ProveedorFinanzas extends ChangeNotifier {
     coleccion: Colecciones.ventas,
     fromFirestore: VentaModelo.fromFirestore,
     toFirestore: (v) => v.toFirestore(),
+    ordenarPor: null,
   );
 
   final FirestoreRepositorio<CompraModelo> _repoCompras = FirestoreRepositorio(
     coleccion: Colecciones.compras,
     fromFirestore: CompraModelo.fromFirestore,
     toFirestore: (c) => c.toFirestore(),
+    ordenarPor: null,
   );
 
   final FirestoreRepositorio<GastoModelo> _repoGastos = FirestoreRepositorio(
     coleccion: Colecciones.gastos,
     fromFirestore: GastoModelo.fromFirestore,
     toFirestore: (g) => g.toFirestore(),
+    ordenarPor: null,
   );
 
   List<VentaModelo> _ventas = [];

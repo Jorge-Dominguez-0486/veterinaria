@@ -8,10 +8,15 @@ class FirestoreRepositorio<T> {
   final T Function(DocumentSnapshot) fromFirestore;
   final Map<String, dynamic> Function(T) toFirestore;
 
+  /// Campo por el que se ordena al obtener todos. null = sin orden.
+  final String? ordenarPor;
+
   FirestoreRepositorio({
     required this.coleccion,
     required this.fromFirestore,
     required this.toFirestore,
+    this.ordenarPor =
+        'nombre', // valor por defecto para colecciones con 'nombre'
   });
 
   // ── Referencia a la colección ──────────────────────────────────────
@@ -50,16 +55,11 @@ class FirestoreRepositorio<T> {
   // ── LEER TODOS ─────────────────────────────────────────────────────
   Future<List<T>> obtenerTodos() async {
     try {
-      final snap = await _ref.orderBy('nombre').get();
+      final Query query = ordenarPor != null ? _ref.orderBy(ordenarPor!) : _ref;
+      final snap = await query.get();
       return snap.docs.map(fromFirestore).toList();
     } catch (e) {
-      // Si no tiene campo 'nombre', obtener sin ordenar
-      try {
-        final snap = await _ref.get();
-        return snap.docs.map(fromFirestore).toList();
-      } catch (e2) {
-        throw Exception('Error al obtener todos de $coleccion: $e2');
-      }
+      throw Exception('Error al obtener todos de $coleccion: $e');
     }
   }
 

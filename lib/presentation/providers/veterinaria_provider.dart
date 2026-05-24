@@ -12,6 +12,7 @@ class ProveedorVeterinaria extends ChangeNotifier {
     coleccion: Colecciones.citas,
     fromFirestore: CitaModelo.fromFirestore,
     toFirestore: (c) => c.toFirestore(),
+    ordenarPor: null, // citas no tienen campo 'nombre'
   );
 
   final FirestoreRepositorio<ConsultaModelo> _repoConsultas =
@@ -19,6 +20,7 @@ class ProveedorVeterinaria extends ChangeNotifier {
     coleccion: Colecciones.consultas,
     fromFirestore: ConsultaModelo.fromFirestore,
     toFirestore: (c) => c.toFirestore(),
+    ordenarPor: null,
   );
 
   final FirestoreRepositorio<TratamientoModelo> _repoTratamientos =
@@ -26,15 +28,18 @@ class ProveedorVeterinaria extends ChangeNotifier {
     coleccion: Colecciones.tratamientos,
     fromFirestore: TratamientoModelo.fromFirestore,
     toFirestore: (t) => t.toFirestore(),
+    ordenarPor: null,
   );
 
   List<CitaModelo> _citas = [];
+  List<CitaModelo> _citasCliente = []; // solo las del cliente autenticado
   List<ConsultaModelo> _consultas = [];
   List<TratamientoModelo> _tratamientos = [];
   bool _cargando = false;
   String? _error;
 
   List<CitaModelo> get citas => _citas;
+  List<CitaModelo> get citasCliente => _citasCliente; // para vista cliente
   List<ConsultaModelo> get consultas => _consultas;
   List<TratamientoModelo> get tratamientos => _tratamientos;
   bool get cargando => _cargando;
@@ -89,13 +94,14 @@ class ProveedorVeterinaria extends ChangeNotifier {
     _setCargando(true);
     try {
       await _repoCitas.crear(cita);
-      // Recargar por clienteId para respetar reglas de Firestore
+      // Recargar solo la lista del cliente, sin tocar _citas (lista del admin)
       if (cita.clienteId.isNotEmpty) {
-        await cargarCitasPorCliente(cita.clienteId);
+        _citasCliente =
+            await _repoCitas.obtenerPorCampo('clienteId', cita.clienteId);
       } else {
         _citas = await _repoCitas.obtenerTodos();
-        notifyListeners();
       }
+      notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -111,11 +117,12 @@ class ProveedorVeterinaria extends ChangeNotifier {
     try {
       await _repoCitas.actualizar(cita.id, cita);
       if (cita.clienteId.isNotEmpty) {
-        await cargarCitasPorCliente(cita.clienteId);
+        _citasCliente =
+            await _repoCitas.obtenerPorCampo('clienteId', cita.clienteId);
       } else {
         _citas = await _repoCitas.obtenerTodos();
-        notifyListeners();
       }
+      notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -131,11 +138,12 @@ class ProveedorVeterinaria extends ChangeNotifier {
     try {
       await _repoCitas.actualizarCampos(id, {'estado': nuevoEstado});
       if (clienteId.isNotEmpty) {
-        await cargarCitasPorCliente(clienteId);
+        _citasCliente =
+            await _repoCitas.obtenerPorCampo('clienteId', clienteId);
       } else {
         _citas = await _repoCitas.obtenerTodos();
-        notifyListeners();
       }
+      notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -149,11 +157,12 @@ class ProveedorVeterinaria extends ChangeNotifier {
     try {
       await _repoCitas.eliminar(id);
       if (clienteId.isNotEmpty) {
-        await cargarCitasPorCliente(clienteId);
+        _citasCliente =
+            await _repoCitas.obtenerPorCampo('clienteId', clienteId);
       } else {
         _citas = await _repoCitas.obtenerTodos();
-        notifyListeners();
       }
+      notifyListeners();
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -182,7 +191,8 @@ class ProveedorVeterinaria extends ChangeNotifier {
   Future<void> cargarCitasPorCliente(String clienteId) async {
     _setCargando(true);
     try {
-      _citas = await _repoCitas.obtenerPorCampo('clienteId', clienteId);
+      // Guardamos en _citasCliente para NO pisar la lista global del admin
+      _citasCliente = await _repoCitas.obtenerPorCampo('clienteId', clienteId);
       _error = null;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');

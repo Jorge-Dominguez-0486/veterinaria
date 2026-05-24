@@ -13,6 +13,7 @@ class ProveedorInventario extends ChangeNotifier {
     coleccion: Colecciones.productos,
     fromFirestore: ProductoModelo.fromFirestore,
     toFirestore: (p) => p.toFirestore(),
+    // productos sí tienen 'nombre', se deja el default
   );
 
   final FirestoreRepositorio<InventarioModelo> _repoInventario =
@@ -20,6 +21,7 @@ class ProveedorInventario extends ChangeNotifier {
     coleccion: Colecciones.inventario,
     fromFirestore: InventarioModelo.fromFirestore,
     toFirestore: (i) => i.toFirestore(),
+    ordenarPor: null, // inventario no tiene campo 'nombre'
   );
 
   List<ProductoModelo> _productos = [];
