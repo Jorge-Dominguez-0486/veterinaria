@@ -114,7 +114,7 @@ class ProveedorInventario extends ChangeNotifier {
   Future<bool> eliminarProducto(String id) async {
     _setCargando(true);
     try {
-      await _repoProductos.desactivar(id);
+      await _repoProductos.eliminar(id);
       _productos = await _repoProductos.obtenerTodos();
       notifyListeners();
       return true;

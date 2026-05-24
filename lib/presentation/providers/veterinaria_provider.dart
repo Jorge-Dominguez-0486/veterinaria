@@ -160,6 +160,22 @@ class ProveedorVeterinaria extends ChangeNotifier {
     }
   }
 
+  // ── Citas filtradas por cliente (área cliente) ────────────────────
+  Future<void> cargarCitasPorCliente(String clienteId) async {
+    _setCargando(true);
+    try {
+      _citas = await _repoCitas.obtenerPorCampo('clienteId', clienteId);
+      _error = null;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _setCargando(false);
+    }
+  }
+
+  // ── Cancelar cita (acción del cliente) ───────────────────────────
+  Future<bool> cancelarCita(String id) => cambiarEstadoCita(id, 'cancelada');
+
   // ────────────────────────────────────────────────────────────────────
   //  CONSULTAS
   // ────────────────────────────────────────────────────────────────────
@@ -219,6 +235,19 @@ class ProveedorVeterinaria extends ChangeNotifier {
       return _consultas.firstWhere((c) => c.id == id);
     } catch (_) {
       return null;
+    }
+  }
+
+  // ── Historial médico filtrado por mascota (área cliente) ──────────
+  Future<void> cargarConsultasPorMascota(String mascotaId) async {
+    _setCargando(true);
+    try {
+      _consultas = await _repoConsultas.obtenerPorCampo('mascotaId', mascotaId);
+      _error = null;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _setCargando(false);
     }
   }
 

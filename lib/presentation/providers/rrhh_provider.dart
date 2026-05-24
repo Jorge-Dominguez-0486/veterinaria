@@ -97,7 +97,7 @@ class ProveedorRRHH extends ChangeNotifier {
   Future<bool> eliminarEmpleado(String id) async {
     _setCargando(true);
     try {
-      await _repoEmpleados.desactivar(id);
+      await _repoEmpleados.eliminar(id);
       _empleados = await _repoEmpleados.obtenerTodos();
       notifyListeners();
       return true;

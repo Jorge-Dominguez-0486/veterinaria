@@ -14,6 +14,7 @@ import 'inventario_screen.dart';
 import 'rrhh_screen.dart';
 import 'finanzas_screen.dart';
 import 'catalogos_screen.dart';
+import '../cliente/cliente_shell.dart';
 
 class AdminShell extends StatefulWidget {
   const AdminShell({super.key});
@@ -87,6 +88,17 @@ class _AdminShellState extends State<AdminShell> {
           ],
         ),
         actions: [
+          // Botón para previsualizar la app como la ve un cliente
+          IconButton(
+            tooltip: 'Ver vista del cliente',
+            icon: const Icon(Icons.preview_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                fullscreenDialog: true,
+                builder: (_) => const _VistaClientePreview(),
+              ),
+            ),
+          ),
           IconButton(
             tooltip: 'Cerrar sesión',
             icon: const Icon(Icons.logout_rounded),
@@ -261,6 +273,50 @@ class _RailNav extends StatelessWidget {
                 label: Text(d.label),
               ))
           .toList(),
+    );
+  }
+}
+
+// ── Vista previa del área de cliente (solo para admin) ────────────────────
+class _VistaClientePreview extends StatelessWidget {
+  const _VistaClientePreview();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        const ClienteShell(),
+        // Banner indicador de que es modo previsualización
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: SafeArea(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Container(
+                margin: const EdgeInsets.only(top: 56),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black87,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.visibility_rounded,
+                        color: Colors.white, size: 14),
+                    SizedBox(width: 6),
+                    Text('Vista previa — cliente',
+                        style: TextStyle(color: Colors.white, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

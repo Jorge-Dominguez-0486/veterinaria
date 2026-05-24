@@ -31,10 +31,7 @@ class PolivetApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // ── Auth ──────────────────────────────────────────────────────
         ChangeNotifierProvider(create: (_) => ProveedorAuth()),
-
-        // ── Fase 3: Providers de negocio ──────────────────────────────
         ChangeNotifierProvider(create: (_) => ProveedorClientes()),
         ChangeNotifierProvider(create: (_) => ProveedorMascotas()),
         ChangeNotifierProvider(create: (_) => ProveedorCatalogos()),
@@ -43,18 +40,25 @@ class PolivetApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProveedorFinanzas()),
         ChangeNotifierProvider(create: (_) => ProveedorRRHH()),
       ],
-      child: MaterialApp.router(
-        title: 'Polivet Pro',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.tema,
-        locale: const Locale('es', 'ES'),
-        supportedLocales: const [Locale('es', 'ES')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        routerConfig: AppRouter.router,
+      // Builder accede a los providers ya registrados para poder
+      // pasarle ProveedorAuth al router como refreshListenable.
+      child: Builder(
+        builder: (context) {
+          final auth = context.read<ProveedorAuth>();
+          return MaterialApp.router(
+            title: 'Polivet Pro',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.tema,
+            locale: const Locale('es', 'ES'),
+            supportedLocales: const [Locale('es', 'ES')],
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            routerConfig: AppRouter.crearRouter(auth),
+          );
+        },
       ),
     );
   }

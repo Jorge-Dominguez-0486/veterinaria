@@ -18,6 +18,9 @@ class AuthRepositorio {
     try {
       final doc = await _db.collection(_coleccion).doc(uid).get();
       if (!doc.exists) return null;
+      // Verificar que el documento tenga campos esenciales
+      final data = doc.data() as Map<String, dynamic>?;
+      if (data == null || !data.containsKey('nombre')) return null;
       return UsuarioModelo.fromFirestore(doc);
     } catch (e) {
       throw Exception('Error al obtener usuario: $e');
@@ -36,15 +39,37 @@ class AuthRepositorio {
       );
 
       final uid = credencial.user!.uid;
+      final firebaseUser = credencial.user!;
 
-      // Actualizar último acceso
-      await _db.collection(_coleccion).doc(uid).update({
-        'ultimoAcceso': Timestamp.fromDate(DateTime.now()),
-      });
+      // Verificar si existe un documento completo en Firestore
+      UsuarioModelo? usuario = await obtenerUsuario(uid);
 
-      final usuario = await obtenerUsuario(uid);
-      if (usuario == null)
-        throw Exception('Usuario no encontrado en Firestore');
+      if (usuario == null) {
+        // El usuario existe en Auth pero no tiene documento completo.
+        // Crear documento con datos disponibles de Firebase Auth.
+        final nombreParts = (firebaseUser.displayName ?? '').split(' ');
+        usuario = UsuarioModelo(
+          id: uid,
+          nombre: nombreParts.isNotEmpty && nombreParts.first.isNotEmpty
+              ? nombreParts.first
+              : 'Usuario',
+          apellido:
+              nombreParts.length > 1 ? nombreParts.sublist(1).join(' ') : '',
+          email: firebaseUser.email ?? email.trim(),
+          telefono: firebaseUser.phoneNumber ?? '',
+          rol: RolUsuario.cliente,
+          activo: true,
+          fechaCreacion: DateTime.now(),
+          ultimoAcceso: DateTime.now(),
+        );
+        await _db.collection(_coleccion).doc(uid).set(usuario.toFirestore());
+      } else {
+        // Documento completo existe: solo actualizar último acceso
+        await _db.collection(_coleccion).doc(uid).update({
+          'ultimoAcceso': Timestamp.fromDate(DateTime.now()),
+        });
+      }
+
       return usuario;
     } on FirebaseAuthException catch (e) {
       throw Exception(_mensajeError(e.code));

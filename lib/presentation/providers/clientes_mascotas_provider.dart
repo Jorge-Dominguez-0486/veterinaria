@@ -77,7 +77,7 @@ class ProveedorClientes extends ChangeNotifier {
   Future<bool> eliminarCliente(String id) async {
     _setCargando(true);
     try {
-      await _repo.desactivar(id);
+      await _repo.eliminar(id);
       await cargarClientes();
       return true;
     } catch (e) {
@@ -170,13 +170,27 @@ class ProveedorMascotas extends ChangeNotifier {
     }
   }
 
-  // ── Mascotas de un cliente ────────────────────────────────────────
+  // ── Mascotas de un cliente (admin: consulta general) ─────────────
   Future<List<MascotaModelo>> mascotasDeCliente(String clienteId) async {
     return await _repo.obtenerPorCampo('clienteId', clienteId);
   }
 
   List<MascotaModelo> mascotasDeClienteLocal(String clienteId) =>
       _mascotas.where((m) => m.clienteId == clienteId && m.activo).toList();
+
+  // ── Cargar solo las mascotas del cliente autenticado ──────────────
+  // Usado por las pantallas del área de cliente (no del panel admin).
+  Future<void> cargarMascotasPorCliente(String clienteId) async {
+    _setCargando(true);
+    try {
+      _mascotas = await _repo.obtenerPorCampo('clienteId', clienteId);
+      _error = null;
+    } catch (e) {
+      _error = e.toString().replaceFirst('Exception: ', '');
+    } finally {
+      _setCargando(false);
+    }
+  }
 
   // ── Crear ─────────────────────────────────────────────────────────
   Future<bool> crearMascota(MascotaModelo mascota) async {
@@ -214,7 +228,7 @@ class ProveedorMascotas extends ChangeNotifier {
   Future<bool> eliminarMascota(String id) async {
     _setCargando(true);
     try {
-      await _repo.desactivar(id);
+      await _repo.eliminar(id);
       await cargarMascotas();
       return true;
     } catch (e) {
