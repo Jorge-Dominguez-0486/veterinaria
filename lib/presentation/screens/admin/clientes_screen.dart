@@ -1,3 +1,6 @@
+// ═══════════════════════════════════════════════════════════════════════════
+//  clientes_screen.dart
+// ═══════════════════════════════════════════════════════════════════════════
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,13 +12,30 @@ import '../../widgets/widgets_comunes.dart';
 class ClientesScreen extends StatefulWidget {
   const ClientesScreen({super.key});
 
+  /// Llamado desde AdminShell → FAB "Agregar cliente"
+  static void abrirFormulario(BuildContext context, {ClienteModelo? cliente}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.fondo,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _FormCliente(cliente: cliente),
+    );
+  }
+
   @override
   State<ClientesScreen> createState() => _ClientesScreenState();
 }
 
+// Filtros disponibles
+enum _FiltroCliente { todos, activos, inactivos }
+
 class _ClientesScreenState extends State<ClientesScreen> {
   final _busqueda = TextEditingController();
   String _query = '';
+  _FiltroCliente _filtro = _FiltroCliente.todos;
 
   @override
   void initState() {
@@ -32,29 +52,68 @@ class _ClientesScreenState extends State<ClientesScreen> {
     super.dispose();
   }
 
+  List<ClienteModelo> _aplicarFiltros(List<ClienteModelo> todos) {
+    List<ClienteModelo> lista = switch (_filtro) {
+      _FiltroCliente.activos => todos.where((c) => c.activo).toList(),
+      _FiltroCliente.inactivos => todos.where((c) => !c.activo).toList(),
+      _FiltroCliente.todos => todos,
+    };
+    if (_query.isNotEmpty) {
+      final q = _query.toLowerCase();
+      lista = lista
+          .where((c) =>
+              c.nombreCompleto.toLowerCase().contains(q) ||
+              c.email.toLowerCase().contains(q) ||
+              c.telefono.contains(q))
+          .toList();
+    }
+    return lista;
+  }
+
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<ProveedorClientes>();
-    final lista = _query.isEmpty ? prov.clientes : prov.buscar(_query);
+    final lista = _aplicarFiltros(prov.clientes);
 
     return Column(
       children: [
+        // ── Barra de búsqueda ─────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.all(16),
-          child: BarraBusqueda(
-            controller: _busqueda,
-            hint: 'Buscar cliente...',
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child:
+              BarraBusqueda(controller: _busqueda, hint: 'Buscar cliente...'),
+        ),
+        // ── Chips de filtro ───────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              _buildChip('Todos', _FiltroCliente.todos, prov.clientes.length),
+              const SizedBox(width: 8),
+              _buildChip('Activos', _FiltroCliente.activos,
+                  prov.clientes.where((c) => c.activo).length),
+              const SizedBox(width: 8),
+              _buildChip('Inactivos', _FiltroCliente.inactivos,
+                  prov.clientes.where((c) => !c.activo).length),
+            ],
           ),
         ),
+        const SizedBox(height: 8),
+        // ── Lista ─────────────────────────────────────────────────────
         Expanded(
           child: prov.cargando
               ? const CargandoIndicador()
               : lista.isEmpty
                   ? EstadoVacio(
-                      mensaje: 'No hay clientes registrados',
+                      mensaje:
+                          'No hay clientes${_filtro != _FiltroCliente.todos ? ' con ese filtro' : ' registrados'}',
                       icono: Icons.people_rounded,
-                      labelBoton: 'Agregar cliente',
-                      onBoton: () => _abrirFormulario(context),
+                      labelBoton: _filtro == _FiltroCliente.todos
+                          ? 'Agregar cliente'
+                          : null,
+                      onBoton: _filtro == _FiltroCliente.todos
+                          ? () => ClientesScreen.abrirFormulario(context)
+                          : null,
                     )
                   : RefreshIndicator(
                       color: AppColors.primario,
@@ -64,8 +123,9 @@ class _ClientesScreenState extends State<ClientesScreen> {
                         itemCount: lista.length,
                         itemBuilder: (_, i) => _ClienteTile(
                           cliente: lista[i],
-                          onEditar: () =>
-                              _abrirFormulario(context, cliente: lista[i]),
+                          onEditar: () => ClientesScreen.abrirFormulario(
+                              context,
+                              cliente: lista[i]),
                           onEliminar: () => _eliminar(context, lista[i]),
                         ),
                       ),
@@ -75,15 +135,23 @@ class _ClientesScreenState extends State<ClientesScreen> {
     );
   }
 
-  void _abrirFormulario(BuildContext context, {ClienteModelo? cliente}) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.fondo,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  Widget _buildChip(String label, _FiltroCliente valor, int count) {
+    final seleccionado = _filtro == valor;
+    return FilterChip(
+      label: Text('$label ($count)'),
+      selected: seleccionado,
+      onSelected: (_) => setState(() => _filtro = valor),
+      selectedColor: AppColors.primario.withOpacity(0.15),
+      checkmarkColor: AppColors.primario,
+      labelStyle: TextStyle(
+        color: seleccionado ? AppColors.primario : AppColors.textoMedio,
+        fontSize: 12,
+        fontWeight: seleccionado ? FontWeight.w700 : FontWeight.w400,
       ),
-      builder: (_) => _FormCliente(cliente: cliente),
+      side: BorderSide(
+        color: seleccionado ? AppColors.primario : AppColors.borde,
+      ),
+      backgroundColor: AppColors.fondoTarjeta,
     );
   }
 
@@ -106,12 +174,6 @@ class _ClientesScreenState extends State<ClientesScreen> {
     }
   }
 }
-
-// ── FloatingActionButton externo ──────────────────────────────────────────
-// Se agrega en el AdminShell; aquí sólo hay un FAB local que se puede ver
-// si quieres activar el botón directamente en la screen.
-// Descomenta si lo prefieres aquí:
-// floatingActionButton: FloatingActionButton(...)
 
 // ── Tile de cliente ───────────────────────────────────────────────────────
 class _ClienteTile extends StatelessWidget {
@@ -230,7 +292,6 @@ class _FormClienteState extends State<_FormCliente> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título
             Row(
               children: [
                 Text(

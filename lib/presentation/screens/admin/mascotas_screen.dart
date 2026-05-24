@@ -12,13 +12,29 @@ import '../../widgets/widgets_comunes.dart';
 
 class MascotasScreen extends StatefulWidget {
   const MascotasScreen({super.key});
+
+  /// Llamado desde AdminShell → FAB "Agregar mascota"
+  static void abrirFormulario(BuildContext context, {MascotaModelo? mascota}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.fondo,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => _FormMascota(mascota: mascota),
+    );
+  }
+
   @override
   State<MascotasScreen> createState() => _MascotasScreenState();
 }
 
+enum _FiltroMascota { todas, activas, inactivas }
+
 class _MascotasScreenState extends State<MascotasScreen> {
   final _busqueda = TextEditingController();
   String _query = '';
+  _FiltroMascota _filtro = _FiltroMascota.todas;
 
   @override
   void initState() {
@@ -37,27 +53,63 @@ class _MascotasScreenState extends State<MascotasScreen> {
     super.dispose();
   }
 
+  List<MascotaModelo> _aplicarFiltros(List<MascotaModelo> todas) {
+    List<MascotaModelo> lista = switch (_filtro) {
+      _FiltroMascota.activas => todas.where((m) => m.activo).toList(),
+      _FiltroMascota.inactivas => todas.where((m) => !m.activo).toList(),
+      _FiltroMascota.todas => todas,
+    };
+    if (_query.isNotEmpty) {
+      final q = _query.toLowerCase();
+      lista = lista.where((m) => m.nombre.toLowerCase().contains(q)).toList();
+    }
+    return lista;
+  }
+
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<ProveedorMascotas>();
-    final lista = _query.isEmpty ? prov.mascotas : prov.buscar(_query);
+    final lista = _aplicarFiltros(prov.mascotas);
 
     return Column(
       children: [
+        // ── Búsqueda ──────────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child:
               BarraBusqueda(controller: _busqueda, hint: 'Buscar mascota...'),
         ),
+        // ── Chips de filtro ───────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              _chip('Todas', _FiltroMascota.todas, prov.mascotas.length),
+              const SizedBox(width: 8),
+              _chip('Activas', _FiltroMascota.activas,
+                  prov.mascotas.where((m) => m.activo).length),
+              const SizedBox(width: 8),
+              _chip('Inactivas', _FiltroMascota.inactivas,
+                  prov.mascotas.where((m) => !m.activo).length),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // ── Lista ─────────────────────────────────────────────────────
         Expanded(
           child: prov.cargando
               ? const CargandoIndicador()
               : lista.isEmpty
                   ? EstadoVacio(
-                      mensaje: 'No hay mascotas registradas',
+                      mensaje:
+                          'No hay mascotas${_filtro != _FiltroMascota.todas ? ' con ese filtro' : ' registradas'}',
                       icono: Icons.pets_rounded,
-                      labelBoton: 'Agregar mascota',
-                      onBoton: () => _abrirFormulario(context),
+                      labelBoton: _filtro == _FiltroMascota.todas
+                          ? 'Agregar mascota'
+                          : null,
+                      onBoton: _filtro == _FiltroMascota.todas
+                          ? () => MascotasScreen.abrirFormulario(context)
+                          : null,
                     )
                   : RefreshIndicator(
                       color: AppColors.primario,
@@ -67,8 +119,9 @@ class _MascotasScreenState extends State<MascotasScreen> {
                         itemCount: lista.length,
                         itemBuilder: (_, i) => _MascotaTile(
                           mascota: lista[i],
-                          onEditar: () =>
-                              _abrirFormulario(context, mascota: lista[i]),
+                          onEditar: () => MascotasScreen.abrirFormulario(
+                              context,
+                              mascota: lista[i]),
                           onEliminar: () => _eliminar(context, lista[i]),
                         ),
                       ),
@@ -78,14 +131,21 @@ class _MascotasScreenState extends State<MascotasScreen> {
     );
   }
 
-  void _abrirFormulario(BuildContext ctx, {MascotaModelo? mascota}) {
-    showModalBottomSheet(
-      context: ctx,
-      isScrollControlled: true,
-      backgroundColor: AppColors.fondo,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => _FormMascota(mascota: mascota),
+  Widget _chip(String label, _FiltroMascota valor, int count) {
+    final sel = _filtro == valor;
+    return FilterChip(
+      label: Text('$label ($count)'),
+      selected: sel,
+      onSelected: (_) => setState(() => _filtro = valor),
+      selectedColor: AppColors.primario.withOpacity(0.15),
+      checkmarkColor: AppColors.primario,
+      labelStyle: TextStyle(
+        color: sel ? AppColors.primario : AppColors.textoMedio,
+        fontSize: 12,
+        fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+      ),
+      side: BorderSide(color: sel ? AppColors.primario : AppColors.borde),
+      backgroundColor: AppColors.fondoTarjeta,
     );
   }
 
@@ -106,6 +166,7 @@ class _MascotasScreenState extends State<MascotasScreen> {
   }
 }
 
+// ── Tile mascota ──────────────────────────────────────────────────────────
 class _MascotaTile extends StatelessWidget {
   final MascotaModelo mascota;
   final VoidCallback onEditar;
@@ -135,6 +196,11 @@ class _MascotaTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (!mascota.activo)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: ChipEstado(estado: 'inactivo'),
+              ),
             IconButton(
                 icon: const Icon(Icons.edit_rounded,
                     color: AppColors.primario, size: 20),
@@ -150,6 +216,7 @@ class _MascotaTile extends StatelessWidget {
   }
 }
 
+// ── Formulario mascota ────────────────────────────────────────────────────
 class _FormMascota extends StatefulWidget {
   final MascotaModelo? mascota;
   const _FormMascota({this.mascota});
@@ -236,7 +303,6 @@ class _FormMascotaState extends State<_FormMascota> {
                 validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
               ),
               const SizedBox(height: 12),
-              // Dueño
               DropdownButtonFormField<String>(
                 value: _clienteId,
                 decoration: const InputDecoration(labelText: 'Dueño *'),
@@ -248,7 +314,6 @@ class _FormMascotaState extends State<_FormMascota> {
                 validator: (v) => v == null ? 'Requerido' : null,
               ),
               const SizedBox(height: 12),
-              // Especie
               DropdownButtonFormField<String>(
                 value: _especieId,
                 decoration: const InputDecoration(labelText: 'Especie'),
@@ -262,7 +327,6 @@ class _FormMascotaState extends State<_FormMascota> {
                 }),
               ),
               const SizedBox(height: 12),
-              // Raza
               DropdownButtonFormField<String>(
                 value: _razaId,
                 decoration: const InputDecoration(labelText: 'Raza'),
@@ -273,7 +337,6 @@ class _FormMascotaState extends State<_FormMascota> {
                 onChanged: (v) => setState(() => _razaId = v),
               ),
               const SizedBox(height: 12),
-              // Sexo
               DropdownButtonFormField<String>(
                 value: _sexo,
                 decoration: const InputDecoration(labelText: 'Sexo'),
@@ -302,7 +365,6 @@ class _FormMascotaState extends State<_FormMascota> {
                 ],
               ),
               const SizedBox(height: 12),
-              // Fecha nacimiento
               InkWell(
                 onTap: () async {
                   final fecha = await showDatePicker(

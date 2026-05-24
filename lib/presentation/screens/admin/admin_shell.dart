@@ -169,25 +169,17 @@ class _AdminShellState extends State<AdminShell> {
         final ctx = context;
         switch (_indice) {
           case 1:
-            // TODO: Se activará cuando reparemos ClientesScreen
-            // ClientesScreen.abrirFormulario(ctx);
-            break;
+            ClientesScreen.abrirFormulario(ctx);
           case 2:
-            // TODO: Se activará cuando reparemos MascotasScreen
-            // MascotasScreen.abrirFormulario(ctx);
-            break;
+            MascotasScreen.abrirFormulario(ctx);
           case 3:
-            // CitasScreen.abrirFormulario(ctx);
-            break;
+            CitasScreen.abrirFormulario(ctx);
           case 4:
-            // InventarioScreen.abrirFormulario(ctx);
-            break;
+            InventarioScreen.abrirFormulario(ctx);
           case 5:
-            // RrhhScreen.abrirFormulario(ctx);
-            break;
+            RrhhScreen.abrirFormulario(ctx);
           case 6:
-            // FinanzasScreen.abrirFormulario(ctx);
-            break;
+            FinanzasScreen.abrirFormulario(ctx);
         }
       },
     );

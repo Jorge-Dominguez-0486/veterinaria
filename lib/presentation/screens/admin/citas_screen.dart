@@ -34,6 +34,8 @@ class _CitasScreenState extends State<CitasScreen>
   late TabController _tabs;
   final _busqueda = TextEditingController();
   String _query = '';
+  // null = todos los estados; solo aplica al tab "Todas"
+  String? _filtroEstado;
 
   @override
   void initState() {
@@ -65,6 +67,49 @@ class _CitasScreenState extends State<CitasScreen>
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: BarraBusqueda(controller: _busqueda, hint: 'Buscar cita...'),
         ),
+        // Chips de estado (visibles solo cuando el tab "Todas" está activo)
+        AnimatedBuilder(
+          animation: _tabs,
+          builder: (_, __) => _tabs.index == 2
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  child: SizedBox(
+                    height: 34,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _ChipEstadoCita(
+                            label: 'Todas',
+                            valor: null,
+                            actual: _filtroEstado,
+                            onTap: () => setState(() => _filtroEstado = null)),
+                        const SizedBox(width: 8),
+                        _ChipEstadoCita(
+                            label: 'Programadas',
+                            valor: 'programada',
+                            actual: _filtroEstado,
+                            onTap: () =>
+                                setState(() => _filtroEstado = 'programada')),
+                        const SizedBox(width: 8),
+                        _ChipEstadoCita(
+                            label: 'Completadas',
+                            valor: 'completada',
+                            actual: _filtroEstado,
+                            onTap: () =>
+                                setState(() => _filtroEstado = 'completada')),
+                        const SizedBox(width: 8),
+                        _ChipEstadoCita(
+                            label: 'Canceladas',
+                            valor: 'cancelada',
+                            actual: _filtroEstado,
+                            onTap: () =>
+                                setState(() => _filtroEstado = 'cancelada')),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
         TabBar(
           controller: _tabs,
           labelColor: AppColors.primario,
@@ -84,7 +129,11 @@ class _CitasScreenState extends State<CitasScreen>
                   children: [
                     _ListaCitas(citas: prov.citasProgramadas, query: _query),
                     _ListaCitas(citas: prov.citasHoy, query: _query),
-                    _ListaCitas(citas: prov.citas, query: _query),
+                    _ListaCitas(
+                      citas: prov.citas,
+                      query: _query,
+                      filtroEstado: _filtroEstado,
+                    ),
                   ],
                 ),
         ),
@@ -96,15 +145,21 @@ class _CitasScreenState extends State<CitasScreen>
 class _ListaCitas extends StatelessWidget {
   final List<CitaModelo> citas;
   final String query;
-  const _ListaCitas({required this.citas, required this.query});
+  final String? filtroEstado;
+  const _ListaCitas(
+      {required this.citas, required this.query, this.filtroEstado});
 
   @override
   Widget build(BuildContext context) {
-    final filtradas = query.isEmpty
-        ? citas
-        : citas
-            .where((c) => c.motivo.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+    List<CitaModelo> filtradas = citas;
+    if (filtroEstado != null) {
+      filtradas = filtradas.where((c) => c.estado == filtroEstado).toList();
+    }
+    if (query.isNotEmpty) {
+      filtradas = filtradas
+          .where((c) => c.motivo.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
 
     if (filtradas.isEmpty) {
       return EstadoVacio(
@@ -143,6 +198,38 @@ class _ListaCitas extends StatelessWidget {
             : mostrarError(context, 'Error al eliminar');
       }
     }
+  }
+}
+
+// ── Chip de filtro de estado para citas ──────────────────────────────────
+class _ChipEstadoCita extends StatelessWidget {
+  final String label;
+  final String? valor;
+  final String? actual;
+  final VoidCallback onTap;
+  const _ChipEstadoCita(
+      {required this.label,
+      required this.valor,
+      required this.actual,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final sel = actual == valor;
+    return FilterChip(
+      label: Text(label),
+      selected: sel,
+      onSelected: (_) => onTap(),
+      selectedColor: AppColors.informacion.withOpacity(0.15),
+      checkmarkColor: AppColors.informacion,
+      labelStyle: TextStyle(
+        fontSize: 12,
+        color: sel ? AppColors.informacion : AppColors.textoMedio,
+        fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+      ),
+      side: BorderSide(color: sel ? AppColors.informacion : AppColors.borde),
+      backgroundColor: AppColors.fondoTarjeta,
+    );
   }
 }
 

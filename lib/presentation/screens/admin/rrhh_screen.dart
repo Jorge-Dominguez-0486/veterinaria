@@ -28,9 +28,15 @@ class RrhhScreen extends StatefulWidget {
   State<RrhhScreen> createState() => _RrhhScreenState();
 }
 
+enum _FiltroRRHH { todos, activos, inactivos }
+
+const _puestos = ['veterinario', 'recepcionista', 'gerente', 'auxiliar'];
+
 class _RrhhScreenState extends State<RrhhScreen> {
   final _busqueda = TextEditingController();
   String _query = '';
+  _FiltroRRHH _filtroEstado = _FiltroRRHH.todos;
+  String? _filtroPuesto; // null = todos los puestos
 
   @override
   void initState() {
@@ -47,33 +53,90 @@ class _RrhhScreenState extends State<RrhhScreen> {
     super.dispose();
   }
 
+  List<EmpleadoModelo> _aplicarFiltros(List<EmpleadoModelo> todos) {
+    List<EmpleadoModelo> lista = switch (_filtroEstado) {
+      _FiltroRRHH.activos => todos.where((e) => e.activo).toList(),
+      _FiltroRRHH.inactivos => todos.where((e) => !e.activo).toList(),
+      _FiltroRRHH.todos => todos,
+    };
+    if (_filtroPuesto != null) {
+      lista = lista.where((e) => e.puesto == _filtroPuesto).toList();
+    }
+    if (_query.isNotEmpty) {
+      final q = _query.toLowerCase();
+      lista = lista
+          .where((e) =>
+              '${e.nombre} ${e.apellido}'.toLowerCase().contains(q) ||
+              e.puesto.toLowerCase().contains(q))
+          .toList();
+    }
+    return lista;
+  }
+
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<ProveedorRRHH>();
-    final lista = _query.isEmpty
-        ? prov.empleados
-        : prov.empleados
-            .where((e) => '${e.nombre} ${e.apellido}'
-                .toLowerCase()
-                .contains(_query.toLowerCase()))
-            .toList();
+    final lista = _aplicarFiltros(prov.empleados);
 
     return Column(
       children: [
+        // ── Búsqueda ──────────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child:
               BarraBusqueda(controller: _busqueda, hint: 'Buscar empleado...'),
         ),
+        // ── Filtro estado ─────────────────────────────────────────────
+        SizedBox(
+          height: 36,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              _chipEstado('Todos', _FiltroRRHH.todos, prov.empleados.length),
+              const SizedBox(width: 8),
+              _chipEstado('Activos', _FiltroRRHH.activos,
+                  prov.empleados.where((e) => e.activo).length),
+              const SizedBox(width: 8),
+              _chipEstado('Inactivos', _FiltroRRHH.inactivos,
+                  prov.empleados.where((e) => !e.activo).length),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        // ── Filtro puesto ─────────────────────────────────────────────
+        SizedBox(
+          height: 36,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              _chipPuesto(null, 'Todos los puestos'),
+              const SizedBox(width: 8),
+              ..._puestos.map((p) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _chipPuesto(p, _capitalize(p)),
+                  )),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        // ── Lista ─────────────────────────────────────────────────────
         Expanded(
           child: prov.cargando
               ? const CargandoIndicador()
               : lista.isEmpty
                   ? EstadoVacio(
-                      mensaje: 'No hay empleados registrados',
+                      mensaje: 'No hay empleados con ese filtro',
                       icono: Icons.badge_rounded,
-                      labelBoton: 'Nuevo empleado',
-                      onBoton: () => RrhhScreen.abrirFormulario(context),
+                      labelBoton: _filtroEstado == _FiltroRRHH.todos &&
+                              _filtroPuesto == null
+                          ? 'Nuevo empleado'
+                          : null,
+                      onBoton: _filtroEstado == _FiltroRRHH.todos &&
+                              _filtroPuesto == null
+                          ? () => RrhhScreen.abrirFormulario(context)
+                          : null,
                     )
                   : RefreshIndicator(
                       color: AppColors.primario,
@@ -94,6 +157,45 @@ class _RrhhScreenState extends State<RrhhScreen> {
     );
   }
 
+  Widget _chipEstado(String label, _FiltroRRHH valor, int count) {
+    final sel = _filtroEstado == valor;
+    return FilterChip(
+      label: Text('$label ($count)'),
+      selected: sel,
+      onSelected: (_) => setState(() => _filtroEstado = valor),
+      selectedColor: AppColors.primario.withOpacity(0.15),
+      checkmarkColor: AppColors.primario,
+      labelStyle: TextStyle(
+        fontSize: 12,
+        color: sel ? AppColors.primario : AppColors.textoMedio,
+        fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+      ),
+      side: BorderSide(color: sel ? AppColors.primario : AppColors.borde),
+      backgroundColor: AppColors.fondoTarjeta,
+    );
+  }
+
+  Widget _chipPuesto(String? valor, String label) {
+    final sel = _filtroPuesto == valor;
+    return FilterChip(
+      label: Text(label),
+      selected: sel,
+      onSelected: (_) => setState(() => _filtroPuesto = valor),
+      selectedColor: AppColors.secundario.withOpacity(0.25),
+      checkmarkColor: AppColors.primarioClaro,
+      labelStyle: TextStyle(
+        fontSize: 12,
+        color: sel ? AppColors.primarioClaro : AppColors.textoMedio,
+        fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+      ),
+      side: BorderSide(color: sel ? AppColors.primarioClaro : AppColors.borde),
+      backgroundColor: AppColors.fondoTarjeta,
+    );
+  }
+
+  String _capitalize(String s) =>
+      s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+
   Future<void> _eliminar(BuildContext context, EmpleadoModelo e) async {
     final ok = await confirmarEliminacion(context,
         titulo: 'Desactivar empleado',
@@ -109,6 +211,7 @@ class _RrhhScreenState extends State<RrhhScreen> {
   }
 }
 
+// ── Tile empleado ─────────────────────────────────────────────────────────
 class _EmpleadoTile extends StatelessWidget {
   final EmpleadoModelo empleado;
   final VoidCallback onEditar;
@@ -141,7 +244,11 @@ class _EmpleadoTile extends StatelessWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (!empleado.activo) const ChipEstado(estado: 'inactivo'),
+            if (!empleado.activo)
+              const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: ChipEstado(estado: 'inactivo'),
+              ),
             IconButton(
                 icon: const Icon(Icons.edit_rounded,
                     color: AppColors.primario, size: 20),
@@ -178,13 +285,6 @@ class _FormEmpleadoState extends State<_FormEmpleado> {
   bool _guardando = false;
 
   bool get _esEdicion => widget.empleado != null;
-
-  static const _puestos = [
-    'veterinario',
-    'recepcionista',
-    'gerente',
-    'auxiliar'
-  ];
 
   @override
   void initState() {

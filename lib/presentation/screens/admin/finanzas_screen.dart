@@ -33,6 +33,7 @@ class FinanzasScreen extends StatefulWidget {
 class _FinanzasScreenState extends State<FinanzasScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabs;
+  String? _filtroVenta; // null = todas; 'pagada' | 'pendiente' | 'cancelada'
 
   @override
   void initState() {
@@ -85,6 +86,49 @@ class _FinanzasScreenState extends State<FinanzasScreen>
             ],
           ),
         ),
+        // Chips de estado de ventas (solo en tab Ventas)
+        AnimatedBuilder(
+          animation: _tabs,
+          builder: (_, __) => _tabs.index == 0
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+                  child: SizedBox(
+                    height: 34,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _ChipVenta(
+                            label: 'Todas',
+                            valor: null,
+                            actual: _filtroVenta,
+                            onTap: () => setState(() => _filtroVenta = null)),
+                        const SizedBox(width: 8),
+                        _ChipVenta(
+                            label: 'Pagadas',
+                            valor: 'pagada',
+                            actual: _filtroVenta,
+                            onTap: () =>
+                                setState(() => _filtroVenta = 'pagada')),
+                        const SizedBox(width: 8),
+                        _ChipVenta(
+                            label: 'Pendientes',
+                            valor: 'pendiente',
+                            actual: _filtroVenta,
+                            onTap: () =>
+                                setState(() => _filtroVenta = 'pendiente')),
+                        const SizedBox(width: 8),
+                        _ChipVenta(
+                            label: 'Canceladas',
+                            valor: 'cancelada',
+                            actual: _filtroVenta,
+                            onTap: () =>
+                                setState(() => _filtroVenta = 'cancelada')),
+                      ],
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
         TabBar(
           controller: _tabs,
           labelColor: AppColors.primario,
@@ -102,7 +146,8 @@ class _FinanzasScreenState extends State<FinanzasScreen>
               : TabBarView(
                   controller: _tabs,
                   children: [
-                    _ListaVentas(ventas: fin.ventas),
+                    _ListaVentas(
+                        ventas: fin.ventas, filtroEstado: _filtroVenta),
                     _ListaGastos(gastos: fin.gastos),
                     _ListaCompras(compras: fin.compras),
                   ],
@@ -149,11 +194,15 @@ class _ResumenChip extends StatelessWidget {
 // ── Lista ventas ──────────────────────────────────────────────────────────
 class _ListaVentas extends StatelessWidget {
   final List<VentaModelo> ventas;
-  const _ListaVentas({required this.ventas});
+  final String? filtroEstado;
+  const _ListaVentas({required this.ventas, this.filtroEstado});
 
   @override
   Widget build(BuildContext context) {
-    if (ventas.isEmpty) {
+    final lista = filtroEstado == null
+        ? ventas
+        : ventas.where((v) => v.estado == filtroEstado).toList();
+    if (lista.isEmpty) {
       return EstadoVacio(
         mensaje: 'No hay ventas registradas',
         icono: Icons.receipt_long_rounded,
@@ -166,9 +215,41 @@ class _ListaVentas extends StatelessWidget {
       onRefresh: () => context.read<ProveedorFinanzas>().cargarTodo(),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: ventas.length,
-        itemBuilder: (_, i) => _VentaTile(venta: ventas[i]),
+        itemCount: lista.length,
+        itemBuilder: (_, i) => _VentaTile(venta: lista[i]),
       ),
+    );
+  }
+}
+
+// ── Chip filtro ventas ────────────────────────────────────────────────────
+class _ChipVenta extends StatelessWidget {
+  final String label;
+  final String? valor;
+  final String? actual;
+  final VoidCallback onTap;
+  const _ChipVenta(
+      {required this.label,
+      required this.valor,
+      required this.actual,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final sel = actual == valor;
+    return FilterChip(
+      label: Text(label),
+      selected: sel,
+      onSelected: (_) => onTap(),
+      selectedColor: AppColors.exito.withOpacity(0.15),
+      checkmarkColor: AppColors.exito,
+      labelStyle: TextStyle(
+        fontSize: 12,
+        color: sel ? AppColors.exito : AppColors.textoMedio,
+        fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+      ),
+      side: BorderSide(color: sel ? AppColors.exito : AppColors.borde),
+      backgroundColor: AppColors.fondoTarjeta,
     );
   }
 }
