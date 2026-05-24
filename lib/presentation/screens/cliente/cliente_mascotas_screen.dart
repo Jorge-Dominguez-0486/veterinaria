@@ -25,12 +25,12 @@ class _ClienteMascotasScreenState extends State<ClienteMascotasScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final uid = context.read<ProveedorAuth>().usuario?.id ?? '';
-      context.read<ProveedorMascotas>().cargarMascotasPorCliente(uid);
-      context
-          .read<ProveedorCatalogos>()
-          .cargarTodo(); // Cargamos catálogos para el form
+      await context.read<ProveedorCatalogos>().cargarTodo();
+      if (context.mounted) {
+        context.read<ProveedorMascotas>().cargarMascotasPorCliente(uid);
+      }
     });
   }
 
@@ -558,9 +558,7 @@ class _FormMascotaClienteState extends State<_FormMascotaCliente> {
                     ?.nombre;
 
                 final razasFiltradas = catalogos.razas
-                    .where((r) =>
-                        r.especieId == _especieIdSeleccionada ||
-                        r.especieId == nombreEspecieSeleccionada)
+                    .where((r) => r.especieId == _especieIdSeleccionada)
                     .toList();
 
                 return DropdownButtonFormField<String>(
