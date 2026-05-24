@@ -89,8 +89,13 @@ class ProveedorVeterinaria extends ChangeNotifier {
     _setCargando(true);
     try {
       await _repoCitas.crear(cita);
-      _citas = await _repoCitas.obtenerTodos();
-      notifyListeners();
+      // Recargar por clienteId para respetar reglas de Firestore
+      if (cita.clienteId.isNotEmpty) {
+        await cargarCitasPorCliente(cita.clienteId);
+      } else {
+        _citas = await _repoCitas.obtenerTodos();
+        notifyListeners();
+      }
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -105,8 +110,12 @@ class ProveedorVeterinaria extends ChangeNotifier {
     _setCargando(true);
     try {
       await _repoCitas.actualizar(cita.id, cita);
-      _citas = await _repoCitas.obtenerTodos();
-      notifyListeners();
+      if (cita.clienteId.isNotEmpty) {
+        await cargarCitasPorCliente(cita.clienteId);
+      } else {
+        _citas = await _repoCitas.obtenerTodos();
+        notifyListeners();
+      }
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -117,11 +126,16 @@ class ProveedorVeterinaria extends ChangeNotifier {
     }
   }
 
-  Future<bool> cambiarEstadoCita(String id, String nuevoEstado) async {
+  Future<bool> cambiarEstadoCita(String id, String nuevoEstado,
+      {String clienteId = ''}) async {
     try {
       await _repoCitas.actualizarCampos(id, {'estado': nuevoEstado});
-      _citas = await _repoCitas.obtenerTodos();
-      notifyListeners();
+      if (clienteId.isNotEmpty) {
+        await cargarCitasPorCliente(clienteId);
+      } else {
+        _citas = await _repoCitas.obtenerTodos();
+        notifyListeners();
+      }
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -130,12 +144,16 @@ class ProveedorVeterinaria extends ChangeNotifier {
     }
   }
 
-  Future<bool> eliminarCita(String id) async {
+  Future<bool> eliminarCita(String id, {String clienteId = ''}) async {
     _setCargando(true);
     try {
       await _repoCitas.eliminar(id);
-      _citas = await _repoCitas.obtenerTodos();
-      notifyListeners();
+      if (clienteId.isNotEmpty) {
+        await cargarCitasPorCliente(clienteId);
+      } else {
+        _citas = await _repoCitas.obtenerTodos();
+        notifyListeners();
+      }
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -174,7 +192,8 @@ class ProveedorVeterinaria extends ChangeNotifier {
   }
 
   // ── Cancelar cita (acción del cliente) ───────────────────────────
-  Future<bool> cancelarCita(String id) => cambiarEstadoCita(id, 'cancelada');
+  Future<bool> cancelarCita(String id, {String clienteId = ''}) =>
+      cambiarEstadoCita(id, 'cancelada', clienteId: clienteId);
 
   // ────────────────────────────────────────────────────────────────────
   //  CONSULTAS

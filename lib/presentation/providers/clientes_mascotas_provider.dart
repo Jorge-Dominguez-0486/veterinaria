@@ -197,7 +197,12 @@ class ProveedorMascotas extends ChangeNotifier {
     _setCargando(true);
     try {
       await _repo.crear(mascota);
-      await cargarMascotas();
+      // Recargar solo las mascotas del cliente (respeta las reglas de Firestore)
+      if (mascota.clienteId.isNotEmpty) {
+        await cargarMascotasPorCliente(mascota.clienteId);
+      } else {
+        await cargarMascotas();
+      }
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -213,7 +218,11 @@ class ProveedorMascotas extends ChangeNotifier {
     _setCargando(true);
     try {
       await _repo.actualizar(mascota.id, mascota);
-      await cargarMascotas();
+      if (mascota.clienteId.isNotEmpty) {
+        await cargarMascotasPorCliente(mascota.clienteId);
+      } else {
+        await cargarMascotas();
+      }
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');
@@ -224,12 +233,16 @@ class ProveedorMascotas extends ChangeNotifier {
     }
   }
 
-  // ── Eliminar (soft delete) ────────────────────────────────────────
-  Future<bool> eliminarMascota(String id) async {
+  // ── Eliminar ──────────────────────────────────────────────────────
+  Future<bool> eliminarMascota(String id, {String clienteId = ''}) async {
     _setCargando(true);
     try {
       await _repo.eliminar(id);
-      await cargarMascotas();
+      if (clienteId.isNotEmpty) {
+        await cargarMascotasPorCliente(clienteId);
+      } else {
+        await cargarMascotas();
+      }
       return true;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');

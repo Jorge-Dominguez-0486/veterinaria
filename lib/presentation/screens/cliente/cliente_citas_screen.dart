@@ -300,7 +300,7 @@ class _TarjetaCita extends StatelessWidget {
               Navigator.of(ctx).pop();
               final ok = await context
                   .read<ProveedorVeterinaria>()
-                  .cancelarCita(cita.id);
+                  .cancelarCita(cita.id, clienteId: cita.clienteId);
               if (context.mounted) {
                 ok
                     ? mostrarExito(context, 'Cita cancelada')

@@ -107,6 +107,21 @@ class AuthRepositorio {
 
       await _db.collection(_coleccion).doc(uid).set(nuevoUsuario.toFirestore());
 
+      // Si el rol es cliente, crear también documento en la colección 'clientes'
+      // para que aparezca en el panel de administración
+      if (rol == RolUsuario.cliente) {
+        await _db.collection('clientes').doc(uid).set({
+          'nombre': nombre.trim(),
+          'apellido': apellido.trim(),
+          'email': email.trim(),
+          'telefono': telefono.trim(),
+          'direccion': '',
+          'activo': true,
+          'fechaRegistro': Timestamp.fromDate(DateTime.now()),
+          'usuarioId': uid,
+        });
+      }
+
       // Actualizar displayName en Firebase Auth
       await credencial.user!.updateDisplayName('$nombre $apellido');
 
