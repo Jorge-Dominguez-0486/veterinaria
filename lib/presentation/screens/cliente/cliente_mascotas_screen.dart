@@ -11,6 +11,8 @@ import '../../../data/modelos/veterinaria_modelo.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/clientes_mascotas_provider.dart';
 import '../../providers/veterinaria_provider.dart';
+import '../../providers/catalogos_provider.dart';
+import '../../widgets/widgets_comunes.dart';
 
 class ClienteMascotasScreen extends StatefulWidget {
   const ClienteMascotasScreen({super.key});
@@ -26,40 +28,75 @@ class _ClienteMascotasScreenState extends State<ClienteMascotasScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final uid = context.read<ProveedorAuth>().usuario?.id ?? '';
       context.read<ProveedorMascotas>().cargarMascotasPorCliente(uid);
+      context
+          .read<ProveedorCatalogos>()
+          .cargarTodo(); // Cargamos catálogos para el form
     });
+  }
+
+  void _abrirFormularioMascota(BuildContext context, String clienteId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.fondo,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _FormMascotaCliente(clienteId: clienteId),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final mascotas = context.watch<ProveedorMascotas>();
+    final uid = context.read<ProveedorAuth>().usuario?.id ?? '';
 
-    if (mascotas.cargando) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.primario));
-    }
+    return Scaffold(
+      backgroundColor: AppColors.fondo,
+      body: Builder(
+        builder: (context) {
+          if (mascotas.cargando) {
+            return const Center(
+                child: CircularProgressIndicator(color: AppColors.primario));
+          }
 
-    if (mascotas.mascotas.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.pets_rounded, size: 72, color: AppColors.textoClaro),
-            SizedBox(height: 16),
-            Text('No tienes mascotas registradas',
-                style: TextStyle(color: AppColors.textoMedio, fontSize: 16)),
-            SizedBox(height: 8),
-            Text('Comunícate con nosotros para registrar\na tu mascota.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textoClaro, fontSize: 13)),
-          ],
-        ),
-      );
-    }
+          if (mascotas.mascotas.isEmpty) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.pets_rounded,
+                      size: 72, color: AppColors.textoClaro),
+                  SizedBox(height: 16),
+                  Text('No tienes mascotas registradas',
+                      style:
+                          TextStyle(color: AppColors.textoMedio, fontSize: 16)),
+                  SizedBox(height: 8),
+                  Text(
+                      'Toca el botón inferior para registrar\na tu primer compañero.',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(color: AppColors.textoClaro, fontSize: 13)),
+                ],
+              ),
+            );
+          }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: mascotas.mascotas.length,
-      itemBuilder: (_, i) => _TarjetaMascota(mascota: mascotas.mascotas[i]),
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: mascotas.mascotas.length,
+            itemBuilder: (_, i) =>
+                _TarjetaMascota(mascota: mascotas.mascotas[i]),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primario,
+        foregroundColor: AppColors.blanco,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Nueva Mascota'),
+        onPressed: () => _abrirFormularioMascota(context, uid),
+      ),
     );
   }
 }
@@ -83,7 +120,6 @@ class _TarjetaMascota extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Avatar
               CircleAvatar(
                 radius: 30,
                 backgroundColor: AppColors.secundario.withOpacity(0.2),
@@ -91,7 +127,6 @@ class _TarjetaMascota extends StatelessWidget {
                     color: AppColors.primario, size: 32),
               ),
               const SizedBox(width: 14),
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +235,6 @@ class _TabInfoMascota extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // Avatar grande
         Center(
           child: CircleAvatar(
             radius: 50,
@@ -216,8 +250,6 @@ class _TabInfoMascota extends StatelessWidget {
                   const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
         ),
         const SizedBox(height: 24),
-
-        // Ficha
         _FichaTarjeta(
           titulo: 'Información general',
           filas: [
@@ -229,7 +261,6 @@ class _TabInfoMascota extends StatelessWidget {
             _FilaInfo('Registro', fmtFecha.format(mascota.fechaRegistro)),
           ],
         ),
-
         if (mascota.observaciones.isNotEmpty) ...[
           const SizedBox(height: 16),
           _FichaTarjeta(
@@ -415,5 +446,238 @@ class _FilaHistorial extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// ── Formulario de registro automático para el cliente ─────────────────────────
+class _FormMascotaCliente extends StatefulWidget {
+  final String clienteId;
+  const _FormMascotaCliente({required this.clienteId});
+
+  @override
+  State<_FormMascotaCliente> createState() => _FormMascotaClienteState();
+}
+
+class _FormMascotaClienteState extends State<_FormMascotaCliente> {
+  final _formKey = GlobalKey<FormState>();
+  final _nombreCtrl = TextEditingController();
+  final _edadCtrl = TextEditingController();
+  final _pesoCtrl = TextEditingController();
+  final _colorCtrl = TextEditingController();
+  final _notasCtrl = TextEditingController();
+
+  String? _especieIdSeleccionada;
+  String? _razaIdSeleccionada;
+  String _sexoSeleccionado = 'macho';
+  bool _guardando = false;
+
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _edadCtrl.dispose();
+    _pesoCtrl.dispose();
+    _colorCtrl.dispose();
+    _notasCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final catalogos = context.watch<ProveedorCatalogos>();
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              EncabezadoForm(
+                titulo: 'Registrar mi mascota',
+                onCerrar: () => Navigator.of(context).pop(),
+              ),
+              const SizedBox(height: 16),
+              if (catalogos.cargando)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (catalogos.especies.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    '⚠️ El catálogo está vacío. El Administrador debe registrar especies y razas primero.',
+                    style: TextStyle(color: AppColors.error, fontSize: 13),
+                  ),
+                ),
+              TextFormField(
+                controller: _nombreCtrl,
+                decoration:
+                    const InputDecoration(labelText: 'Nombre de tu mascota *'),
+                validator: (v) =>
+                    (v == null || v.isEmpty) ? 'Escribe su nombre' : null,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _especieIdSeleccionada,
+                decoration: const InputDecoration(
+                  labelText: 'Especie *',
+                  hintText: 'Ej. Perro, Gato...',
+                ),
+                items: catalogos.especies
+                    .map((e) =>
+                        DropdownMenuItem(value: e.id, child: Text(e.nombre)))
+                    .toList(),
+                onChanged: catalogos.especies.isEmpty
+                    ? null
+                    : (v) {
+                        setState(() {
+                          _especieIdSeleccionada = v;
+                          _razaIdSeleccionada = null;
+                        });
+                      },
+                validator: (v) => v == null ? 'Selecciona una especie' : null,
+              ),
+              const SizedBox(height: 12),
+              Builder(builder: (context) {
+                final nombreEspecieSeleccionada = catalogos.especies
+                    .where((e) => e.id == _especieIdSeleccionada)
+                    .firstOrNull
+                    ?.nombre;
+
+                final razasFiltradas = catalogos.razas
+                    .where((r) =>
+                        r.especieId == _especieIdSeleccionada ||
+                        r.especieId == nombreEspecieSeleccionada)
+                    .toList();
+
+                return DropdownButtonFormField<String>(
+                  value: _razaIdSeleccionada,
+                  decoration: InputDecoration(
+                    labelText: 'Raza *',
+                    hintText: _especieIdSeleccionada == null
+                        ? 'Primero elige una especie'
+                        : razasFiltradas.isEmpty
+                            ? 'No hay razas para esta especie'
+                            : 'Selecciona la raza',
+                  ),
+                  items: razasFiltradas
+                      .map((r) =>
+                          DropdownMenuItem(value: r.id, child: Text(r.nombre)))
+                      .toList(),
+                  onChanged:
+                      (_especieIdSeleccionada == null || razasFiltradas.isEmpty)
+                          ? null
+                          : (v) => setState(() => _razaIdSeleccionada = v),
+                  validator: (v) => v == null ? 'Selecciona una raza' : null,
+                );
+              }),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _sexoSeleccionado,
+                decoration: const InputDecoration(labelText: 'Sexo *'),
+                items: const [
+                  DropdownMenuItem(value: 'macho', child: Text('Macho')),
+                  DropdownMenuItem(value: 'hembra', child: Text('Hembra')),
+                ],
+                onChanged: (v) =>
+                    setState(() => _sexoSeleccionado = v ?? 'macho'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _edadCtrl,
+                      decoration:
+                          const InputDecoration(labelText: 'Edad (Años) *'),
+                      keyboardType: TextInputType.number,
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Requerido' : null,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _pesoCtrl,
+                      decoration: const InputDecoration(labelText: 'Peso (Kg)'),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _colorCtrl,
+                decoration:
+                    const InputDecoration(labelText: 'Color / Pelaje *'),
+                validator: (v) =>
+                    (v == null || v.isEmpty) ? 'Indica el color' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _notasCtrl,
+                decoration: const InputDecoration(
+                    labelText: 'Notas médicas o cuidados especiales'),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 24),
+              BotonGuardar(
+                guardando: _guardando,
+                esEdicion: false,
+                onGuardar:
+                    catalogos.especies.isEmpty ? () {} : _procesarRegistro,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _procesarRegistro() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _guardando = true);
+
+    final provMascotas = context.read<ProveedorMascotas>();
+    final edadAnios = int.tryParse(_edadCtrl.text) ?? 0;
+
+    final nuevaMascota = MascotaModelo(
+      id: '',
+      nombre: _nombreCtrl.text.trim(),
+      clienteId: widget.clienteId,
+      especieId: _especieIdSeleccionada ?? '',
+      razaId: _razaIdSeleccionada ?? '',
+      sexo: _sexoSeleccionado,
+      fechaNacimiento: DateTime.now().subtract(Duration(days: 365 * edadAnios)),
+      peso: double.tryParse(_pesoCtrl.text) ?? 0.0,
+      color: _colorCtrl.text.trim(),
+      observaciones: _notasCtrl.text.trim(),
+      activo: true,
+      fechaRegistro: DateTime.now(),
+    );
+
+    final exito = await provMascotas.crearMascota(nuevaMascota);
+
+    if (mounted) {
+      Navigator.of(context).pop();
+      if (exito) {
+        mostrarExito(context, '¡Mascota registrada exitosamente!');
+      } else {
+        mostrarError(context, provMascotas.error ?? 'No se pudo guardar');
+      }
+    }
   }
 }
